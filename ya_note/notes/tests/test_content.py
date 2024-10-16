@@ -1,8 +1,10 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+
 from notes.models import Note
 from notes.forms import NoteForm
+
 
 User = get_user_model()
 
@@ -12,45 +14,30 @@ class TestHomePage(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.user1 = User.objects.create(username='User1')
-        cls.user2 = User.objects.create(username='User2')
+        cls.author_user = User.objects.create(username='AuthorUser')
+        cls.other_user = User.objects.create(username='OtherUser')
 
-        cls.note1 = Note.objects.create(
-            title='Заметка User1',
-            text='Текст заметки User1.',
-            author=cls.user1,
-            slug='slug-user1'
-        )
-        cls.note2 = Note.objects.create(
-            title='Заметка User2',
-            text='Текст заметки User2.',
-            author=cls.user2,
-            slug='slug-user2'
+        cls.author_note = Note.objects.create(
+            title='Заметка автора',
+            text='Текст заметки.',
+            author=cls.author_user,
+            slug='slug-author'
         )
 
-    def test_note_in_context(self):
-        self.client.force_login(self.user1)
-
+    def test_note_in_context_for_author(self):
+        self.client.force_login(self.author_user)
         response = self.client.get(self.HOME_URL)
         object_list = response.context.get('object_list', [])
+        self.assertIn(self.author_note, object_list)
 
-        self.assertIn(self.note1, object_list)
-        self.assertNotIn(self.note2, object_list)
-
-    def test_notes_order(self):
-        self.client.force_login(self.user1)
+    def test_note_in_context_for_other_user(self):
+        self.client.force_login(self.other_user)
         response = self.client.get(self.HOME_URL)
         object_list = response.context.get('object_list', [])
-
-        self.assertEqual(
-            [note.slug for note in object_list],
-            [self.note1.slug]
-        )
+        self.assertNotIn(self.author_note, object_list)
 
 
 class TestNotePages(TestCase):
-    HOME_URL = reverse('notes:list')
-
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create(username='User')
@@ -61,34 +48,14 @@ class TestNotePages(TestCase):
             slug='test-slug'
         )
         cls.create_url = reverse('notes:add')
-        cls.edit_url = reverse('notes:edit',
-                               args=(cls.note.slug,))
+        cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
 
-    def test_create_page_has_form(self):
+    def test_create_and_edit_pages_have_form(self):
+        urls = [self.create_url, self.edit_url]
         self.client.force_login(self.user)
-        response = self.client.get(self.create_url)
-        self.assertIn('form', response.context)
-        self.assertIsInstance(response.context['form'], NoteForm)
 
-    def test_edit_page_has_form(self):
-        self.client.force_login(self.user)
-        response = self.client.get(self.edit_url)
-        self.assertIn('form', response.context)
-        self.assertIsInstance(response.context['form'], NoteForm)
-
-    def test_user_sees_only_own_notes(self):
-        other_user = User.objects.create(username='OtherUser')
-        Note.objects.create(
-            title='Заметка другого пользователя',
-            text='Текст заметки другого пользователя.',
-            author=other_user,
-            slug='other-slug'
-        )
-
-        self.client.force_login(self.user)
-        response = self.client.get(self.HOME_URL)
-        object_list = response.context.get('object_list', [])
-
-        self.assertIn(self.note, object_list)
-        self.assertNotIn('Заметка другого пользователя',
-                         [note.title for note in object_list])
+        for url in urls:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertIn('form', response.context)
+                self.assertIsInstance(response.context['form'], NoteForm)
