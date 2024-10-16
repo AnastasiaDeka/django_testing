@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 from notes.models import Note
 from notes.forms import NoteForm
 
-
 User = get_user_model()
 
 
@@ -24,17 +23,24 @@ class TestHomePage(TestCase):
             slug='slug-author'
         )
 
-    def test_note_in_context_for_author(self):
-        self.client.force_login(self.author_user)
-        response = self.client.get(self.HOME_URL)
-        object_list = response.context.get('object_list', [])
-        self.assertIn(self.author_note, object_list)
+    def test_note_in_context(self):
+        """Проверка, что автор видит свои заметки,
+        а другие пользователи — нет.
+        """
+        clients = [
+            (self.author_user, True),
+            (self.other_user, False)
+        ]
 
-    def test_note_in_context_for_other_user(self):
-        self.client.force_login(self.other_user)
-        response = self.client.get(self.HOME_URL)
-        object_list = response.context.get('object_list', [])
-        self.assertNotIn(self.author_note, object_list)
+        for user, expected in clients:
+            with self.subTest(user=user):
+                self.client.force_login(user)
+                response = self.client.get(self.HOME_URL)
+                object_list = response.context.get('object_list', [])
+                self.assertIs(
+                    self.author_note in object_list,
+                    expected
+                )
 
 
 class TestNotePages(TestCase):
@@ -51,6 +57,7 @@ class TestNotePages(TestCase):
         cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
 
     def test_create_and_edit_pages_have_form(self):
+        """Проверка, что страницы создания и редактирования имеют форму."""
         urls = [self.create_url, self.edit_url]
         self.client.force_login(self.user)
 

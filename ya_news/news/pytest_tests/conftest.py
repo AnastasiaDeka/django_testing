@@ -4,7 +4,6 @@ from datetime import timedelta
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from django.conf import settings
 
 from news.models import News, Comment
 
@@ -13,17 +12,38 @@ User = get_user_model()
 
 @pytest.fixture
 def news_detail(db):
-    return News.objects.create(title='Тестовая новость', text='Просто текст.')
+    """Создает тестовую новость для использования в тестах."""
+    return News.objects.create(title='Тестовая новость',
+                               text='Просто текст.')
 
 
 @pytest.fixture
-def comment_author(db):
-    return User.objects.create_user(username='Комментатор',
+def author(db):
+    """Создает пользователя-автора для тестов."""
+    return User.objects.create_user(username='Автор',
                                     password='password')
 
 
 @pytest.fixture
-def comments(news_detail, db):
+def not_author(db):
+    """Создает пользователя, который не является автором."""
+    return User.objects.create_user(username='Не автор',
+                                    password='password')
+
+
+@pytest.fixture
+def comment(db, news_detail, author):
+    """Создает тестовый комментарий для использования в тестах."""
+    return Comment.objects.create(
+        news=news_detail,
+        author=author,
+        text='Текст комментария'
+    )
+
+
+@pytest.fixture
+def comments(db, news_detail, author):
+    """Создает несколько тестовых комментариев для новости."""
     comments_list = [
         Comment(
             news=news_detail,
@@ -39,70 +59,43 @@ def comments(news_detail, db):
 
 
 @pytest.fixture
-def news(db):
-    today = timezone.now()
-    news_items = [
-        News(
-            title=f'Новость {index}',
-            text='Просто текст.',
-            date=today - timedelta(days=index)
-        )
-        for index in range(settings.NEWS_COUNT_ON_HOME_PAGE)
-    ]
-    News.objects.bulk_create(news_items)
-    return News.objects.all()
-
-
-@pytest.fixture
-def user_factory(db):
-    def create_user(username):
-        return User.objects.create_user(username=username, password='password')
-    return create_user
-
-
-@pytest.fixture
-def author(user_factory):
-    return user_factory('Автор')
-
-
-@pytest.fixture
-def not_author(user_factory):
-    return user_factory('Не автор')
+def news():
+    news = News.objects.create(
+        title='Заголовок',
+        text='Текст новости',
+    )
+    return news
 
 
 @pytest.fixture
 def author_client(client, author):
+    """Фикстура для авторизованного пользователя."""
     client.force_login(author)
     return client
 
 
 @pytest.fixture
 def not_author_client(client, not_author):
+    """Фикстура для пользователя, который не является автором."""
     client.force_login(not_author)
     return client
 
 
 @pytest.fixture
-def comment(db, news_detail, author):
-    return Comment.objects.create(
-        news=news_detail,
-        author=author,
-        text='Текст комментария'
-    )
-
-
-@pytest.fixture
-def comment_form_data():
-    return {
-        'text': 'Новый комментарий'
-    }
-
-
-@pytest.fixture
 def home_url():
+    """Возвращает URL для главной страницы."""
     return reverse('news:home')
 
 
 @pytest.fixture
 def news_detail_url(news_detail):
+    """Возвращает URL для детальной страницы новости."""
     return reverse('news:detail', args=[news_detail.id])
+
+
+@pytest.fixture
+def comment_form_data():
+    """Возвращает данные формы для создания нового комментария."""
+    return {
+        'text': 'Новый комментарий'
+    }

@@ -1,81 +1,82 @@
 from http import HTTPStatus
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-
 from notes.models import Note
 
-
 User = get_user_model()
+
+URLS = {
+    'home': 'notes:home',
+    'login': 'users:login',
+    'logout': 'users:logout',
+    'signup': 'users:signup',
+    'detail': 'notes:detail',
+    'edit': 'notes:edit',
+    'delete': 'notes:delete',
+    'list': 'notes:list',
+    'add': 'notes:add',
+    'success': 'notes:success',
+}
 
 
 class TestRoutes(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.author = User.objects.create(username='Автор')
-        cls.reader = User.objects.create(username='Читатель')
+        cls.author = User.objects.create(username='LeoTolstoy')
+        cls.reader = User.objects.create(username='Reader')
         cls.note = Note.objects.create(
-            title='Заголовок',
-            text='Текст заметки',
+            title='Note Title',
+            text='Note text content.',
             slug='note-slug',
             author=cls.author
         )
 
+    def setUp(self):
+        self.author_client = self.client_class()
+        self.reader_client = self.client_class()
+        self.author_client.force_login(self.author)
+        self.reader_client.force_login(self.reader)
+
     def test_pages_availability(self):
-        urls = (
-            'notes:home',
-            'users:login',
-            'users:logout',
-            'users:signup',
-        )
+        urls = (URLS['home'], URLS['login'], URLS['logout'], URLS['signup'])
         for name in urls:
             with self.subTest(name=name):
                 url = reverse(name)
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_pages_availability_for_author_and_reader(self):
-        users_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.reader, HTTPStatus.NOT_FOUND),
+    def test_availability_for_authors_and_readers(self):
+        urls = (URLS['detail'], URLS['edit'], URLS['delete'])
+        clients_statuses = (
+            (self.author_client, HTTPStatus.OK),
+            (self.reader_client, HTTPStatus.NOT_FOUND),
         )
-        urls = (
-            'notes:detail',
-            'notes:edit',
-            'notes:delete',
-        )
-        for user, status in users_statuses:
-            self.client.force_login(user)
+        for client, status in clients_statuses:
             for name in urls:
-                with self.subTest(user=user, name=name):
+                with self.subTest(client=client, name=name):
                     url = reverse(name, args=(self.note.slug,))
-                    response = self.client.get(url)
+                    response = client.get(url)
                     self.assertEqual(response.status_code, status)
 
     def test_pages_availability_for_auth_users(self):
-        self.client.force_login(self.reader)
-        urls = (
-            'notes:list',
-            'notes:add',
-            'notes:success'
-        )
+        urls = (URLS['list'], URLS['add'], URLS['success'])
         for name in urls:
             with self.subTest(name=name):
                 url = reverse(name)
-                response = self.client.get(url)
+                response = self.reader_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_redirects_for_anonymous_users(self):
-        login_url = reverse('users:login')
+        login_url = reverse(URLS['login'])
         urls = (
-            ('notes:list', None),
-            ('notes:add', None),
-            ('notes:success', None),
-            ('notes:detail', (self.note.slug,)),
-            ('notes:edit', (self.note.slug,)),
-            ('notes:delete', (self.note.slug,)),
+            (URLS['list'], None),
+            (URLS['add'], None),
+            (URLS['success'], None),
+            (URLS['detail'], (self.note.slug,)),
+            (URLS['edit'], (self.note.slug,)),
+            (URLS['delete'], (self.note.slug,)),
         )
         for name, args in urls:
             with self.subTest(name=name, args=args):
