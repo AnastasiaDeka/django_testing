@@ -40,6 +40,7 @@ class TestRoutes(TestCase):
         self.reader_client.force_login(self.reader)
 
     def test_pages_availability(self):
+        """Проверяет доступность страниц для анонимных пользователей."""
         urls = (URLS['home'], URLS['login'], URLS['logout'], URLS['signup'])
         for name in urls:
             with self.subTest(name=name):
@@ -48,6 +49,7 @@ class TestRoutes(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_availability_for_authors_and_readers(self):
+        """Проверяет доступность страниц для авторов и читателей."""
         urls = (URLS['detail'], URLS['edit'], URLS['delete'])
         clients_statuses = (
             (self.author_client, HTTPStatus.OK),
@@ -61,6 +63,7 @@ class TestRoutes(TestCase):
                     self.assertEqual(response.status_code, status)
 
     def test_pages_availability_for_auth_users(self):
+        """Проверяет доступность страниц для авторизованных пользователей."""
         urls = (URLS['list'], URLS['add'], URLS['success'])
         for name in urls:
             with self.subTest(name=name):
@@ -69,6 +72,7 @@ class TestRoutes(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_redirects_for_anonymous_users(self):
+        """Проверяет редиректы для анонимных пользователей."""
         login_url = reverse(URLS['login'])
         urls = (
             (URLS['list'], None),
