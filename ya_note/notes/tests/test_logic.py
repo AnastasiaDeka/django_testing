@@ -59,7 +59,8 @@ class TestNoteCreationAndEditing(TestCase):
         """Проверка, что авторизованный пользователь может
         создать заметку.
         """
-        response = self.client_author.post(self.create_url, data=self.form_data)
+        response = self.client_author.post(self.create_url,
+                                           data=self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
         self.assertEqual(Note.objects.count(), 2)
 
