@@ -17,6 +17,14 @@ class TestNoteCreationAndEditing(TestCase):
     NOTE_SLUG = 'slug-notes'
     NEW_NOTE_TITLE = 'Новая заметка'
     NEW_NOTE_SLUG = 'new-slug'
+    AUTO_GENERATED_TITLE = 'Новая заметка'
+    AUTO_GENERATED_TEXT = 'Текст заметки'
+    ANONYMOUS_NOTE_TITLE = 'Анонимная заметка'
+    ANONYMOUS_NOTE_TEXT = 'Текст заметки'
+    DUPLICATE_SLUG_TITLE = 'Новая заметка с дублирующимся slug'
+    DUPLICATE_SLUG = NOTE_SLUG
+    UPDATED_NOTE_TITLE = 'Обновленный заголовок'
+    UPDATED_NOTE_TEXT = 'Обновлённая заметка'
 
     @classmethod
     def setUpTestData(cls):
@@ -51,8 +59,7 @@ class TestNoteCreationAndEditing(TestCase):
         """Проверка, что авторизованный пользователь может
         создать заметку.
         """
-        response = self.client_author.post(self.create_url,
-                                           data=self.form_data)
+        response = self.client_author.post(self.create_url, data=self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
         self.assertEqual(Note.objects.count(), 2)
 
@@ -66,8 +73,8 @@ class TestNoteCreationAndEditing(TestCase):
         self.client.logout()
 
         form_data = {
-            'title': 'Анонимная заметка',
-            'text': 'Текст заметки',
+            'title': self.ANONYMOUS_NOTE_TITLE,
+            'text': self.ANONYMOUS_NOTE_TEXT,
             'slug': 'anonymous-slug'
         }
 
@@ -83,9 +90,9 @@ class TestNoteCreationAndEditing(TestCase):
         заметку с дублирующимся slug.
         """
         form_data = {
-            'title': 'Новая заметка с дублирующимся slug',
-            'text': 'Текст заметки',
-            'slug': self.note.slug
+            'title': self.DUPLICATE_SLUG_TITLE,
+            'text': self.NOTE_TEXT,
+            'slug': self.DUPLICATE_SLUG
         }
 
         response = self.client_author.post(self.create_url, data=form_data)
@@ -93,43 +100,32 @@ class TestNoteCreationAndEditing(TestCase):
             response,
             'form',
             'slug',
-            self.note.slug + WARNING
+            self.DUPLICATE_SLUG + WARNING
         )
 
     def test_slug_is_generated_automatically_if_not_provided(self):
         """Проверка автоматической генерации slug, если он не предоставлен."""
-        self.client_author.force_login(self.user_author)
-
-        title = 'Явный заголовок заметки'
         form_data = {
-            'title': title,
-            'text': 'Текст заметки',
+            'title': self.AUTO_GENERATED_TITLE,
+            'text': self.AUTO_GENERATED_TEXT,
         }
 
-        form_data.pop('slug', None)
-
-        notes_before = Note.objects.count()
         response = self.client_author.post(self.create_url, data=form_data)
         self.assertRedirects(response, reverse('notes:success'))
 
-        notes_after = Note.objects.count()
-        self.assertEqual(notes_after - notes_before, 1)
+        note = Note.objects.last()
 
-        new_note = Note.objects.latest('id')
-
-        self.assertTrue(new_note.slug,
-                        "Slug не был сгенерирован автоматически.")
-
-        expected_slug = slugify(title)
-        self.assertEqual(new_note.slug, expected_slug)
+        expected_slug = slugify(form_data['title'])
+        self.assertEqual(note.slug, expected_slug)
+        self.assertLessEqual(len(note.slug), 100,)
 
     def test_user_can_edit_note(self):
         """Проверка, что авторизованный пользователь может
         редактировать свою заметку.
         """
         form_data = {
-            'title': 'Обновленный заголовок',
-            'text': 'Обновлённая заметка',
+            'title': self.UPDATED_NOTE_TITLE,
+            'text': self.UPDATED_NOTE_TEXT,
             'slug': self.note.slug
         }
 
