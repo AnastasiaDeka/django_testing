@@ -5,7 +5,6 @@ from pytest_lazyfixture import lazy_fixture
 from django.urls import reverse
 from pytest_django.asserts import assertRedirects
 
-from news.models import Comment, News
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
