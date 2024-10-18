@@ -11,24 +11,21 @@ User = get_user_model()
 
 
 @pytest.fixture
-def news_detail(db):
-    """Создает тестовую новость для использования в тестах."""
-    return News.objects.create(title='Тестовая новость',
-                               text='Просто текст.')
-
-
-@pytest.fixture
 def author(db):
     """Создает пользователя-автора для тестов."""
-    return User.objects.create_user(username='Автор',
-                                    password='password')
+    return User.objects.create_user(username='Автор', password='password')
 
 
 @pytest.fixture
 def not_author(db):
     """Создает пользователя, который не является автором."""
-    return User.objects.create_user(username='Не автор',
-                                    password='password')
+    return User.objects.create_user(username='Не автор', password='password')
+
+
+@pytest.fixture
+def news_detail(db):
+    """Создает тестовую новость для использования в тестах."""
+    return News.objects.create(title='Тестовая новость', text='Просто текст.')
 
 
 @pytest.fixture
@@ -42,8 +39,8 @@ def comment(db, news_detail, author):
 
 
 @pytest.fixture
-def comments(db, news_detail, author):
-    """Создает несколько тестовых комментариев для новости."""
+def comments(db, news_detail):
+    """Создает несколько тестовых комментариев для новости и возвращает их."""
     comments_list = [
         Comment(
             news=news_detail,
@@ -55,16 +52,13 @@ def comments(db, news_detail, author):
         for index in range(3)
     ]
     Comment.objects.bulk_create(comments_list)
-    return Comment.objects.filter(news=news_detail)
 
 
 @pytest.fixture
-def news():
-    news = News.objects.create(
-        title='Заголовок',
-        text='Текст новости',
-    )
-    return news
+def news(db):
+    """Создает тестовую новость и возвращает её."""
+    return News.objects.create(title='Заголовок',
+                               text='Текст новости')
 
 
 @pytest.fixture
@@ -82,6 +76,12 @@ def not_author_client(client, not_author):
 
 
 @pytest.fixture
+def news_detail_pk(news_detail):
+    """Возвращает первичный ключ тестовой новости."""
+    return news_detail.pk
+
+
+@pytest.fixture
 def home_url():
     """Возвращает URL для главной страницы."""
     return reverse('news:home')
@@ -94,8 +94,36 @@ def news_detail_url(news_detail):
 
 
 @pytest.fixture
+def delete_comment_url(comment):
+    """Возвращает URL для удаления комментария."""
+    return reverse('news:delete', args=(comment.id,))
+
+
+@pytest.fixture
+def edit_comment_url(comment):
+    """Возвращает URL для редактирования комментария."""
+    return reverse('news:edit', args=(comment.id,))
+
+
+@pytest.fixture
 def comment_form_data():
     """Возвращает данные формы для создания нового комментария."""
-    return {
-        'text': 'Новый комментарий'
-    }
+    return {'text': 'Новый комментарий'}
+
+
+@pytest.fixture
+def login_url():
+    """Возвращает URL для страницы логина."""
+    return reverse('users:login')
+
+
+@pytest.fixture
+def logout_url():
+    """Возвращает URL для страницы выхода."""
+    return reverse('users:logout')
+
+
+@pytest.fixture
+def signup_url():
+    """Возвращает URL для страницы регистрации."""
+    return reverse('users:signup')

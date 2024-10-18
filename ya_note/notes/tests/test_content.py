@@ -56,10 +56,13 @@ class TestNotePages(TestCase):
         cls.create_url = reverse('notes:add')
         cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
 
+    def setUp(self):
+        """Настройка перед каждым тестом: авторизуем клиента."""
+        self.client.force_login(self.user)
+
     def test_create_and_edit_pages_have_form(self):
         """Проверка, что страницы создания и редактирования имеют форму."""
         urls = [self.create_url, self.edit_url]
-        self.client.force_login(self.user)
 
         for url in urls:
             with self.subTest(url=url):
