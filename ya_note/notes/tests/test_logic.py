@@ -41,7 +41,6 @@ class TestNoteCreationAndEditing(TestCase):
         cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
         cls.delete_url = reverse('notes:delete', args=(cls.note.slug,))
 
-        # Используем константы для описания данных формы
         cls.form_data = {
             'title': cls.NEW_NOTE_TITLE,
             'text': cls.NOTE_TEXT,
@@ -101,17 +100,15 @@ class TestNoteCreationAndEditing(TestCase):
         """Проверка автоматической генерации slug, если он не предоставлен."""
         self.client_author.force_login(self.user_author)
 
-        # Явный заголовок
         title = 'Явный заголовок заметки'
         form_data = {
             'title': title,
             'text': 'Текст заметки',
         }
 
-        # Удаляем slug из данных формы
         form_data.pop('slug', None)
 
-        notes_before = Note.objects.count()  # Подсчет заметок до создания
+        notes_before = Note.objects.count()
         response = self.client_author.post(self.create_url, data=form_data)
         self.assertRedirects(response, reverse('notes:success'))
 
