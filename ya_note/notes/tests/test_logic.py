@@ -70,7 +70,6 @@ class TestNoteCreationAndEditing(TestCase):
         self.assertEqual(note.author, self.user_author)
 
     def test_anonymous_user_cannot_create_note(self):
-        """Проверка, что анонимный пользователь не может создать заметку."""
         self.client.logout()
 
         form_data = {
