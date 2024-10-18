@@ -29,6 +29,11 @@ def news_detail(db):
 
 
 @pytest.fixture
+def pk_news(news):
+    return (news.pk,)
+
+
+@pytest.fixture
 def comment(db, news_detail, author):
     """Создает тестовый комментарий для использования в тестах."""
     return Comment.objects.create(
@@ -73,12 +78,6 @@ def not_author_client(client, not_author):
     """Фикстура для пользователя, который не является автором."""
     client.force_login(not_author)
     return client
-
-
-@pytest.fixture
-def news_detail_pk(news_detail):
-    """Возвращает первичный ключ тестовой новости."""
-    return news_detail.pk
 
 
 @pytest.fixture

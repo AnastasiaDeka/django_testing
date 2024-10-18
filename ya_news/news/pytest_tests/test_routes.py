@@ -5,21 +5,21 @@ from pytest_lazyfixture import lazy_fixture
 from django.urls import reverse
 from pytest_django.asserts import assertRedirects
 
+from news.models import Comment, News
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'name, args',
     [
-        ('news:home', []),
-        ('news:detail', [pytest.lazy_fixture('news_detail_pk')]),
-        ('users:login', []),
-        ('users:logout', []),
-        ('users:signup', []),
+        ('news:home', None),
+        ('news:detail', pytest.lazy_fixture('pk_news')),
+        ('users:login', None),
+        ('users:logout', None),
+        ('users:signup', None),
     ]
 )
 def test_pages_availability(client, name, args):
     """Проверка доступности страниц для анонимного пользователя."""
-    print(f"Trying to reverse URL for name: {name}, args: {args}")
     url = reverse(name, args=args)
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
@@ -43,9 +43,9 @@ def test_availability_for_comment_edit_and_delete(url_fixture,
                                                   client_fixture,
                                                   expected_status):
     """Проверка доступности страниц редактирования и удаления комментариев."""
-    url = url_fixture   # Формируем URL
-    response = client_fixture.get(url)  # Делаем GET-запрос с клиентом
-    assert response.status_code == expected_status  # Проверяем статус ответа
+    url = url_fixture
+    response = client_fixture.get(url)
+    assert response.status_code == expected_status
 
 
 @pytest.mark.parametrize('url_fixture',
@@ -59,7 +59,7 @@ def test_redirect_for_anonymous_client(client,
     """Проверка редиректа для анонимного клиента
     на страницы редактирования и удаления комментариев.
     """
-    url = request.getfixturevalue(url_fixture)  # Получаем URL из фикстуры
+    url = request.getfixturevalue(url_fixture)
     expected_url = f'{login_url}?next={url}'
     response = client.get(url)
     assertRedirects(response, expected_url)
