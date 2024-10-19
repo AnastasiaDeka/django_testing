@@ -23,7 +23,6 @@ class TestHomePage(TestCase):
             slug='slug-author'
         )
 
-        # Создание клиентов для авторизованных пользователей
         cls.client_author = Client()
         cls.client_author.force_login(cls.author_user)
 
@@ -64,7 +63,6 @@ class TestNotePages(TestCase):
         cls.create_url = reverse('notes:add')
         cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
 
-        # Создание клиентов для авторизованных пользователей
         cls.client_author = Client()
         cls.client_author.force_login(cls.user_author)
 
