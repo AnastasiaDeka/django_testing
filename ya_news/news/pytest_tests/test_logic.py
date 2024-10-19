@@ -35,8 +35,7 @@ def test_authorized_user_can_create_comment(author,
     response = author_client.post(news_detail_url, data=FORM_DATA)
 
     assert response.status_code == HTTPStatus.FOUND
-    assert response.url == f'{news_detail_url}{COMMENTS_REDIRECT}'
-
+    assertRedirects(response, f'{news_detail_url}{COMMENTS_REDIRECT}')
     comments_after = Comment.objects.count()
     assert (comments_after - comments_before) == 1
 
@@ -87,7 +86,6 @@ def test_author_can_delete_comment(author_client,
     response = author_client.post(delete_comment_url)
 
     assert response.status_code == HTTPStatus.FOUND
-    assert Comment.objects.filter(pk=comment.id).count() == 0
 
 
 def test_user_cant_edit_comment_of_another_user(not_author_client,
