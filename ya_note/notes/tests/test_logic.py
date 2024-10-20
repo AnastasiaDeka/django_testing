@@ -3,7 +3,6 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
-
 from pytils.translit import slugify
 
 from notes.forms import WARNING
@@ -54,7 +53,6 @@ class TestNoteCreation(TestCase):
         """Проверка, что анонимный пользователь
         не может создать заметку.
         """
-        self.client.logout()
         response = self.client.post(self.URL_TO_ADD, data=self.form_data)
         self.assertRedirects(response,
                              f"{self.URL_TO_LOGIN}?next={self.URL_TO_ADD}")
@@ -124,12 +122,46 @@ class TestNoteEditDelete(TestCase):
             'slug': cls.NOTE_SLUG,
         }
 
+    class TestNoteEditDelete(TestCase):
+        UPDATED_NOTE_TITLE = 'Обновленный заголовок'
+        UPDATED_NOTE_TEXT = 'Обновлённая заметка'
+        NOTE_TITLE = 'Заголовок заметки'
+        NOTE_TEXT = 'Текст заметки'
+        NOTE_SLUG = 'slug-notes'
+
+    @classmethod
+    def setUpTestData(cls):
+        """Создание тестовых данных для всех тестов."""
+        cls.user_author = User.objects.create(username='Автор заметки')
+        cls.user_other = User.objects.create(username='Другой пользователь')
+
+        cls.client_author = Client()
+        cls.client_author.force_login(cls.user_author)
+
+        cls.client_other = Client()
+        cls.client_other.force_login(cls.user_other)
+
+        cls.note = Note.objects.create(
+            author=cls.user_author,
+            title=cls.NOTE_TITLE,
+            text=cls.NOTE_TEXT,
+            slug=cls.NOTE_SLUG
+        )
+
+        cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
+        cls.delete_url = reverse('notes:delete', args=(cls.note.slug,))
+
+        cls.form_data = {
+            'title': cls.UPDATED_NOTE_TITLE,
+            'text': cls.UPDATED_NOTE_TEXT,
+            'slug': cls.NOTE_SLUG,
+        }
+
     def test_user_can_edit_note(self):
         """Проверка, что авторизованный
         пользователь может редактировать свою заметку.
         """
-        response = self.client_author.post(self.edit_url,
-                                           data=self.form_data)
+        response = self.client_author.post(self.edit_url, data=self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
 
         note = Note.objects.get(id=self.note.id)
@@ -146,18 +178,22 @@ class TestNoteEditDelete(TestCase):
 
         self.assertFalse(Note.objects.filter(id=self.note.id).exists())
 
-    def test_user_cannot_edit_or_delete_another_users_note(self):
+    def test_user_cannot_edit_another_users_note(self):
         """Проверка, что авторизованный пользователь не может
-        редактировать или удалять заметку другого пользователя.
+        редактировать заметку другого пользователя.
         """
         response = self.client_other.post(self.edit_url, data=self.form_data)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         note = Note.objects.get(id=self.note.id)
-        self.assertEqual(note.title, self.NOTE_TITLE)
-        self.assertEqual(note.text, self.NOTE_TEXT)
-        self.assertEqual(note.slug, self.NOTE_SLUG)
+        self.assertEqual(note.title, self.note.title)
+        self.assertEqual(note.text, self.note.text)
+        self.assertEqual(note.slug, self.note.slug)
 
+    def test_user_cannot_delete_another_users_note(self):
+        """Проверка, что авторизованный пользователь не может
+        удалять заметку другого пользователя.
+        """
         response = self.client_other.post(self.delete_url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 

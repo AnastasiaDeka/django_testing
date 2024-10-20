@@ -52,7 +52,6 @@ class TestNotePages(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user_author = User.objects.create(username='UserAuthor')
-        cls.user_other = User.objects.create(username='UserOther')
 
         cls.note = Note.objects.create(
             title='Тестовая заметка',
@@ -65,9 +64,6 @@ class TestNotePages(TestCase):
 
         cls.client_author = Client()
         cls.client_author.force_login(cls.user_author)
-
-        cls.client_other = Client()
-        cls.client_other.force_login(cls.user_other)
 
     def test_create_and_edit_pages_have_form(self):
         """Проверка, что страницы создания и редактирования имеют форму."""
