@@ -36,8 +36,7 @@ def test_availability_for_comment_edit_and_delete(url_fixture,
                                                   client_fixture,
                                                   expected_status):
     """Проверка доступности страниц редактирования и удаления комментариев."""
-    url = url_fixture
-    response = client_fixture.get(url)
+    response = client_fixture.get(url_fixture)
     assert response.status_code == expected_status
 
 
