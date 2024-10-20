@@ -83,8 +83,7 @@ def test_author_can_delete_comment(author_client,
     response = author_client.post(delete_comment_url)
 
     assert response.status_code == HTTPStatus.FOUND
-    with pytest.raises(Comment.DoesNotExist):
-        Comment.objects.get(pk=comment.id)
+    assert Comment.objects.count() == 0
 
 
 def test_user_cant_edit_comment_of_another_user(not_author_client,
