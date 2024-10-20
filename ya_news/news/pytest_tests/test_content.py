@@ -38,7 +38,7 @@ def test_comments_order(news_detail, comments, client, news_detail_url):
     хронологическом порядке: старые в начале списка, новые — в конце.
     """
     response = client.get(news_detail_url)
-    news = response.context.get(CONTEXT_OBJECT_DETAIL, None)
+    news = response.context.get(CONTEXT_OBJECT_DETAIL)
     assert news is not None
     all_comments = news.comment_set.all()
     all_timestamps = [comment.created for comment in all_comments]

@@ -3,6 +3,7 @@ from http import HTTPStatus
 import pytest
 from django.test import TestCase
 from pytest_django.asserts import assertRedirects
+from pytest_django.asserts import assertFormError
 
 from news.forms import BAD_WORDS, WARNING
 from news.models import Comment
@@ -56,10 +57,7 @@ def test_user_cant_use_bad_words(author_client,
     form_data = {'text': f'Текст с {bad_word}'}
     response = author_client.post(news_detail_url, data=form_data)
 
-    TestCase().assertFormError(
-        response, 'form', 'text', WARNING
-    )
-
+    assertFormError(response, 'form', 'text', WARNING)
     assert Comment.objects.count() == 0
 
 
@@ -86,6 +84,8 @@ def test_author_can_delete_comment(author_client,
     response = author_client.post(delete_comment_url)
 
     assert response.status_code == HTTPStatus.FOUND
+    with pytest.raises(Comment.DoesNotExist):
+        Comment.objects.get(pk=comment.id)
 
 
 def test_user_cant_edit_comment_of_another_user(not_author_client,

@@ -1,6 +1,6 @@
-import pytest
 from datetime import timedelta
 
+import pytest
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth import get_user_model
